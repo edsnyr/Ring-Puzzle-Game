@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+public enum SolveStatus { Unchecked, Checked, Solved }
+
 public class Piece : MonoBehaviour
 {
 
@@ -9,10 +12,15 @@ public class Piece : MonoBehaviour
     public GameController gameController;
 
     public SpriteRenderer sr;
+    public SpriteRenderer solveHighlight;
+
+    public Color solvedColor;
+    public Color unsolvedColor;
 
     public int ring;
     public int location;
     public float radiusOffset;
+    public SolveStatus solveStatus = SolveStatus.Unchecked;
 
     private void Start() {
         GameController.spinEvent.AddListener(checkSpin);
@@ -173,5 +181,10 @@ public class Piece : MonoBehaviour
         float angle = ((location * 30 + gameController.rotationOffset - 15) % 180);
         sr.transform.localPosition = new Vector3(0, radius, 0);
         transform.localEulerAngles = new Vector3(0, 0, angle);
+    }
+
+    public void DisplayHighlight() {
+        solveHighlight.gameObject.SetActive(true);
+        solveHighlight.color = solveStatus == SolveStatus.Solved ? solvedColor : unsolvedColor;
     }
 }

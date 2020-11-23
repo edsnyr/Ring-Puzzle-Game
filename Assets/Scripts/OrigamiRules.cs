@@ -144,7 +144,7 @@ public class OrigamiRules : Rules
     private void Scramble() {
         int moves = Random.Range(1, maxMoves + 1);
         if(uiController != null)
-            uiController.UpdateMoveDisplay(moves);
+            uiController.EnableAndSetMovesDisplay(moves);
         for(int i = 0; i < moves;) {
             int type = Random.Range(0, 2); //randomly select either shift or spin
             Piece target = pieces[Random.Range(0, pieces.Count)]; //by selecting a piece to manipulate, ensures every move affects at least one piece
@@ -242,9 +242,96 @@ public class OrigamiRules : Rules
     }
 
     /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    public override bool CheckSolve() {
+        foreach(Piece piece in pieces) {
+            piece.solveStatus = SolveStatus.Unchecked;
+        }
+
+        foreach(Piece piece in pieces) {
+            SolveColumn(piece);
+        }
+
+        foreach(Piece piece in pieces) {
+            SolveSquare(piece);
+        }
+
+        foreach(Piece piece in pieces) {
+            if(piece.solveStatus == SolveStatus.Checked || piece.solveStatus == SolveStatus.Unchecked) {
+                Debug.Log("Not Solved");
+                return false;
+            }
+        }
+
+        Debug.Log("Solved");
+        return true;
+    }
+
+    private void SolveColumn(Piece piece) {
+        if(piece.solveStatus == SolveStatus.Checked || piece.solveStatus == SolveStatus.Solved)
+            return;
+        if(piece.ring == gameController.numberOfRings) { //check columns for solve first; if anything is on the outer ring it is supposed to be part of a column
+            List<Piece> checkList = new List<Piece>();
+            checkList.Add(piece);
+            bool solved = true;
+            for(int i = gameController.numberOfRings - 1; i > 0; i--) { //check from outside going in
+                bool found = false;
+                foreach(Piece rowPiece in pieces) {
+                    if(rowPiece.ring == i && rowPiece.location == piece.location) { //if in the same location, add to list
+                        checkList.Add(rowPiece);
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found) //if the piece wasn't found, the column isn't completed, so the puzzle cannot be solved
+                    solved = false;
+            }
+            foreach(Piece rowPiece in checkList) { //mark each found as solved, or just checked if not
+                rowPiece.solveStatus = solved ? SolveStatus.Solved : SolveStatus.Checked;
+            }
+        }
+    }
+
+    private void SolveSquare(Piece piece) {
+        if(piece.solveStatus == SolveStatus.Solved) //only needs to skip if the piece is already considered solved
+            return;
+        if(piece.ring == 2) { //if unchecked and on ring 2, should be part of a square
+            foreach(Piece squarePiece in pieces) {
+                if(squarePiece.ring == 2 && squarePiece.location == (piece.location + 11) % 12) { //check if there is a piece immediately counterclockwise
+                    SolveSquare(squarePiece); //by ensuring there is nothing counterclockwise, we can be certain we aren't solving an improper square, such as the middle of a 2 by 4 formation
+                    if(piece.solveStatus == SolveStatus.Solved) {
+                        return; //if now true, this piece was solved by the counterclockwise piece
+                    }
+                    break; //only one piece can be directly counterclockwise, so safe to break
+                }
+            }
+            List<Piece> checkList = new List<Piece>();
+            checkList.Add(piece);
+            List<Vector2> adjacents = new List<Vector2>() { new Vector2(0, 1), new Vector2(-1, 0), new Vector2(-1, 1) };
+            foreach(Piece squarePiece in pieces) {
+                foreach(Vector2 v2 in adjacents) {
+                    if(squarePiece.ring == piece.ring + v2.x && squarePiece.location == (piece.location + v2.y) % 12) {
+                        if(squarePiece.solveStatus != SolveStatus.Solved) //ensure it hasn't already been included in a solve
+                            checkList.Add(squarePiece);
+                        continue; //found that adjacent, good to move on
+                    }
+                }
+            }
+            foreach(Piece squarePiece in checkList) {
+                squarePiece.solveStatus = (checkList.Count == 4) ? SolveStatus.Solved : SolveStatus.Checked; //if 4 are found, a square was solved
+            }
+        }
+    }
+
+
+
+    /// <summary>
     /// Called by a button to solve the puzzle.
     /// </summary>
     public void StartUnscramble() {
+        uiController.DisableMovesDisplay();
         StartCoroutine(Unscramble());
     }
 
@@ -277,5 +364,9 @@ public class OrigamiRules : Rules
     public void ResetPuzzle() {
         ClearPuzzle();
         BuildPuzzle();
+    }
+
+    public override List<Piece> GetPieces() {
+        return pieces;
     }
 }

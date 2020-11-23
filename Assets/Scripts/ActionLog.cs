@@ -8,10 +8,12 @@ public class ActionLog : MonoBehaviour
     public float undoTime = 0.1f; //time of a move when the player undoes an action
 
     GameController gameController;
+    UIController uiController;
     List<Action> log;
 
     private void Awake() {
         gameController = GetComponent<GameController>();
+        uiController = GetComponent<UIController>();
     }
 
     private void Start() {
@@ -35,6 +37,7 @@ public class ActionLog : MonoBehaviour
         } else {
             TryAdd(newAction);
         }
+        uiController.UpdateMovesDisplay(log.Count);
         //PrintList();
     }
 
@@ -53,6 +56,7 @@ public class ActionLog : MonoBehaviour
         } else {
             TryAdd(newAction);
         }
+        uiController.UpdateMovesDisplay(log.Count);
         //PrintList();
     }
 

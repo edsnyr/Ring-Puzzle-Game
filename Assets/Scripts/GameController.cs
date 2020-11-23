@@ -8,7 +8,6 @@ using TMPro;
 public class GameController : MonoBehaviour
 {
 
-    public GameObject testSprite;
     public Segment segmentPrefab;
     public SpriteMask segmentMask;
     public SpriteRenderer ringSelectionHighlightPrefab;
@@ -43,12 +42,15 @@ public class GameController : MonoBehaviour
     public Button counterClockwiseButton1;
     public Button shiftUpButton;
     public Button shiftDownButton;
+    public Button checkSolveButton;
 
     public RectTransform shiftButtonPivot; //UI object that holds the shift buttons
     public RectTransform spinButtonPivot; //UI object that holds the spin buttons
 
     public static ParameterEvent spinEvent; //called when the player wants to spin a ring
     public static ParameterEvent shiftEvent; //called when the player wants to slide a column
+
+    Rules rules;
 
     SelectionMode mode; //decides whether the player can select rings or columns
     int selectedRing;
@@ -60,6 +62,7 @@ public class GameController : MonoBehaviour
     SpriteMask columnSelectionMask; //masks the center of the column highlight sprite
 
     void Awake() {
+        rules = GetComponent<Rules>();
         InitializeEvents();
         BuildRings();
         SetButtonPivotPoints();
@@ -317,6 +320,13 @@ public class GameController : MonoBehaviour
     private void ModifyModeButton() {
         modeButtonText.text = mode == SelectionMode.Ring ? "Spin Mode" : "Slide Mode";
     }
+
+    public void DisplaySolve() {
+        rules.CheckSolve();
+        foreach(Piece piece in rules.GetPieces()) {
+            piece.DisplayHighlight();
+        }
+    }
 }
 
 /// <summary>
@@ -328,6 +338,6 @@ public class ParameterEvent : UnityEvent<int, bool, float, int> {
 }
 
 /// <summary>
-/// Decided whether the player can manipulate columns or rings.
+/// Decides whether the player can manipulate columns or rings.
 /// </summary>
 public enum SelectionMode {Ring, Column};
