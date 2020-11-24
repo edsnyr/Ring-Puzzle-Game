@@ -18,10 +18,17 @@ public class UIController : MonoBehaviour
         moveDisplay.text = moves.ToString();
     }
 
+    /// <summary>
+    /// Displays the remaining number of moves to optimally solve the puzzle.
+    /// </summary>
+    /// <param name="moves">Current number of moves made in the action log.</param>
     public void UpdateMovesDisplay(int moves) {
         moveDisplay.text = (movesToSolve - moves).ToString();
     }
 
+    /// <summary>
+    /// Called when unscrambling a puzzle, as it is not needed and will otherwise display incorrectly.
+    /// </summary>
     public void DisableMovesDisplay() {
         textDisplay.gameObject.SetActive(false);
         moveDisplay.gameObject.SetActive(false);
