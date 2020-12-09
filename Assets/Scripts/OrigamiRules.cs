@@ -8,8 +8,6 @@ public class OrigamiRules : Rules
     /*
      * Rules based on Paper Mario: The Origami King, the game this came from.
      * Align pieces in columns of 4, or in squares of 2x2 on the inner two rings.
-     * Currently no logic in place to check number of moves made or if a puzzle is solved,
-     * so the player must recognize for themselves for now.
      * A move is defined as a series of shifts or spins on the same column or ring, respectively;
      * for example: spinning the same ring 4 times counts as one move, shifting a column would be
      * a second move, and spinning the original ring again would be a third move.

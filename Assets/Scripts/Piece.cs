@@ -8,7 +8,6 @@ public enum SolveStatus { Unchecked, Checked, Solved }
 public class Piece : MonoBehaviour
 {
 
-
     public GameController gameController;
 
     public SpriteRenderer sr;
@@ -23,8 +22,8 @@ public class Piece : MonoBehaviour
     public SolveStatus solveStatus = SolveStatus.Unchecked;
 
     private void Start() {
-        GameController.spinEvent.AddListener(checkSpin);
-        GameController.shiftEvent.AddListener(checkShift);
+        GameController.spinEvent.AddListener(CheckSpin);
+        GameController.shiftEvent.AddListener(CheckShift);
         PlacePiece(ring, location);
     }
 
@@ -34,9 +33,9 @@ public class Piece : MonoBehaviour
     /// <param name="row">The chosen ring, between 1 and numberOfRings.</param>
     /// <param name="dir">Direction of the spin. True is clockwise.</param>
     /// <param name="time">Duration of the spin in seconds.</param>
-    private void checkSpin(int row, bool dir, float time, int reps) {
+    private void CheckSpin(int row, bool dir, float time, int reps) {
         if(row == ring) {
-            StartCoroutine(spinPiece(dir, time, reps));
+            StartCoroutine(SpinPiece(dir, time, reps));
         }
     }
 
@@ -46,9 +45,9 @@ public class Piece : MonoBehaviour
     /// <param name="column">The chosen column.</param>1
     /// <param name="dir">Direction of the shift. True increases for locations 0-5, decreases 6-11.</param>
     /// <param name="time">Duration of the shift in seconds.</param>
-    private void checkShift(int column, bool dir, float time, int reps) {
+    private void CheckShift(int column, bool dir, float time, int reps) {
         if(column == location % 6) {
-            StartCoroutine(shiftPiece(dir, time, reps));
+            StartCoroutine(ShiftPiece(dir, time, reps));
         }
     }
 
@@ -59,7 +58,7 @@ public class Piece : MonoBehaviour
     /// <param name="dir">Rotation of the spin. True is clockwise.</param>
     /// <param name="time">Duration of the spin in seconds.</param>
     /// <returns></returns>
-    private IEnumerator spinPiece(bool dir, float time, int reps) {
+    private IEnumerator SpinPiece(bool dir, float time, int reps) {
         for(int i = reps; i > 0; i--) {
             location += dir ? -1 : 1;
             if(location == -1 || location == 12) {
@@ -95,7 +94,7 @@ public class Piece : MonoBehaviour
     /// <param name="newDir">Direction of the shift. True shifts up for locations 0-5, down for 6-11.</param>
     /// <param name="time">Duration of the shift in seconds.</param>
     /// <returns></returns>
-    private IEnumerator shiftPiece(bool dir, float time, int reps) {
+    private IEnumerator ShiftPiece(bool dir, float time, int reps) {
         for(int i = reps; i > 0; i--) {
             bool newDir = dir; //save original direction for multiple reps
             if((location / 6) % 2 == 0) { //since direction is based on the angle from the origin, second half is flipped to move all in same direction
@@ -129,35 +128,41 @@ public class Piece : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Enlarges the piece temporarily when it skips across the board, to make it appear like it jumps.
+    /// It also raises slightly on the Y axis to enhance the effect.
+    /// </summary>
+    /// <param name="addedScale">How much bigger the piece gets.</param>
+    /// <param name="jumpHeight">How far the piece raises on the Y axis.</param>
+    /// <param name="time">The time the movement takes.</param>
+    /// <returns></returns>
     private IEnumerator JumpAnimation(float addedScale, float jumpHeight, float time) {
         float startScale = sr.transform.localScale.x;
         float maxScale = startScale + addedScale;
         float startHeight = transform.position.y;
         float maxHeight = startHeight + jumpHeight;
         float timeElapsed = 0;
-        while(timeElapsed < time / 2f) {
+        while(timeElapsed < time / 2f) { //first half, enlarge piece, raise on Y axis
             timeElapsed += Time.deltaTime;
             float newScale = startScale + (timeElapsed / (time / 2f) * addedScale);
             float newHeight = Mathf.SmoothStep(startHeight, startHeight + jumpHeight, timeElapsed / (time / 2f));
-            //float newHeight = startHeight + (timeElapsed / (time / 2f) * jumpHeight);
             sr.transform.localScale = new Vector3(newScale, newScale, 1);
             transform.position = new Vector3(transform.position.x, newHeight, transform.position.z);
             yield return null;
         }
         timeElapsed = 0;
-        sr.transform.localScale = new Vector3(maxScale, maxScale, 1);
-        transform.position = new Vector3(transform.position.x, maxHeight, transform.position.z);
-        while(timeElapsed < time / 2f) {
+        sr.transform.localScale = new Vector3(maxScale, maxScale, 1); //ensure the piece is at the correct scale
+        transform.position = new Vector3(transform.position.x, maxHeight, transform.position.z); //ensure the piece is at the correct position
+        while(timeElapsed < time / 2f) { //second half, undo previous loop
             timeElapsed += Time.deltaTime;
             float newScale = maxScale - (timeElapsed / (time / 2f) * addedScale);
             float newHeight = Mathf.SmoothStep(startHeight + jumpHeight, startHeight, timeElapsed / (time / 2f));
-            //float newHeight = maxHeight - (timeElapsed / (time / 2f) * jumpHeight);
             sr.transform.localScale = new Vector3(newScale, newScale, 1);
             transform.position = new Vector3(transform.position.x, newHeight, transform.position.z);
             yield return null;
         }
-        sr.transform.localScale = new Vector3(startScale, startScale, 1);
-        transform.position = new Vector3(transform.position.x, startHeight, transform.position.z);
+        sr.transform.localScale = new Vector3(startScale, startScale, 1); //ensure the piece is at the correct scale
+        transform.position = new Vector3(transform.position.x, startHeight, transform.position.z); //ensure the piece is at the correct position
     }
 
     /// <summary>
